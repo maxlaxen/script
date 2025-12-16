@@ -1,0 +1,39 @@
+Välkommen till mitt RECON script för att kontrollera en Linux-miljö
+
+=== SYSTEMINFO ===
+Linux kali 6.16.8+kali-arm64 #1 SMP PREEMPT Kali 6.16.8-1kali1 (2025-09-24) aarch64 GNU/Linux
+
+=== AKTUELL ANVÄNDARE ===
+max
+
+=== ANVÄNDARE MED SHELL ===
+root:x:0:0:root:/root:/usr/bin/zsh
+postgres:x:114:118:PostgreSQL administrator:/var/lib/postgresql:/bin/bash
+max:x:1000:1000:max m,,,:/home/max:/usr/bin/zsh
+
+=== NÄTVERK ===
+    inet 127.0.0.1/8 scope host lo
+    inet6 ::1/128 scope host noprefixroute 
+    inet 10.0.2.15/24 brd 10.0.2.255 scope global dynamic noprefixroute eth0
+    inet6 fd17:625c:f037:2:499b:c898:ec17:c3f5/64 scope global temporary dynamic 
+    inet6 fd17:625c:f037:2:a00:27ff:feff:8c4d/64 scope global dynamic mngtmpaddr noprefixroute 
+    inet6 fe80::a00:27ff:feff:8c4d/64 scope link noprefixroute 
+
+=== LÄGG TILL FLERA TESTER  ===
+
+--- SYSTEM & HÅRDVARA ---
+Datum och Tid:
+Tue  9 Dec 11:18:35 CET 2025
+Minnesstatus:
+               total        used        free      shared  buff/cache   available
+Mem:         4002028      756272     2800692       11460      596440     3245756
+Swap:        2168828           0     2168828
+
+--- PUBLIK IP & ÖPPNA PORTAR ---
+Publik IP-adress:
+185.76.9.52
+Lokala öppna portar:
+Netid State Recv-Q Send-Q Local Address:Port Peer Address:Port
+
+--- SÖKVÄG TILL SKRIPT ---
+/home/max/kod/fs/as20/o1

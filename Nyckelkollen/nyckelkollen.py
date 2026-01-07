@@ -1,29 +1,52 @@
-import platform  # Bibliotek för att kunna läsa av systeminfo
+#!/usr/bin/env python3
+import platform
+
+def kolla_lista(password):
+    """
+    Kollar om lösenordet finns i en lokal textfil.
+    Returnerar True vid matchning, annars False.
+    """
+    filnamn = "vanliga_losenord.txt"
+    
+    try:
+        # Öppnar filen med utf-8 för att klara svenska tecken
+        with open(filnamn, "r", encoding="utf-8", errors="ignore") as fil:
+            for rad in fil:
+                # Rensar bort radbrytningar och jämför med lösenordet
+                if rad.strip() == password:
+                    return True
+    except FileNotFoundError:
+        print(f"[-] Systemfel: Hittade inte filen '{filnamn}'.")
+    
+    return False
 
 def main():
-    # --- STEG 1: SYSTEMKOLL ---
+    # --- SYSTEMKONTROLL ---
     print("--- Startar kontroll av systemet ---")
     
-    # Hämta namnet på operativsystemet (t.ex. Windows, Linux)
     current_os = platform.system()
-    
     print(f"Ditt operativsystem: {current_os}")
     
-
-    # --- STEG 2: INPUT FRÅN ANVÄNDARE ---
+    # --- INPUT FRÅN ANVÄNDARE ---
     print("Lösenordskoll v1.0")
     
-    # Ta emot input från användaren och spara i en variabel
     user_password = input("Skriv in lösenordet du vill testa: ")
 
-    # Kontrollera att variabeln inte är tom
     if user_password:
         print("\nLösenordet mottaget.")
-        # Visa längden på lösenordet (bra för att se att mellanslag kom med)
         print(f"Längd: {len(user_password)} tecken.")
-    else:
-        print("\nFel: Du skrev inte in något lösenord.")
 
-# Se till att main-funktionen bara körs om vi startar filen direkt
+        # --- KONTROLL MOT LISTA ---
+        print("Analysera mot databas...")
+        finns_i_lista = kolla_lista(user_password)
+
+        if finns_i_lista:
+            print("[!] VARNING: Lösenordet hittades i listan över vanliga lösenord.")
+        else:
+            print("[+] Lösenordet hittades inte i den lokala listan.")
+
+    else:
+        print("\nFel: Inget lösenord angavs.")
+
 if __name__ == "__main__":
     main()

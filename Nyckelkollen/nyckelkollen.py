@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-import platform
-import os
+import platform       # För att kolla vilket operativsystem som körs
+import os             # För att hantera filer och mappar i systemet
+import hashlib        # För att skapa säkra hash-summor av lösenord
+import urllib.request # För att kunna hämta data från internet (API)
 
 def kolla_mapp(password):
     """
@@ -33,6 +35,40 @@ def kolla_mapp(password):
     
     return False
 
+def kolla_online(password):
+    """
+    Kollar hashen av lösenordet mot Have I Been Pwned API.
+    Returnerar antal träffar (int).
+    """
+    # Skapar SHA-1 hash (krav från API:et)
+    sha1_password = hashlib.sha1(password.encode('utf-8')).hexdigest().upper()
+    
+    # Delar upp hashen för k-anonymitet (skickar bara prefix)
+    prefix, suffix = sha1_password[:5], sha1_password[5:]
+    
+    url = f"https://api.pwnedpasswords.com/range/{prefix}"
+    
+    try:
+        # Hämtar data med urllib (standard i Python)
+        with urllib.request.urlopen(url, timeout=5) as response:
+            
+            # Om allt gick bra (kod 200)
+            if response.getcode() == 200:
+                # Läser svaret och gör om det till text
+                data = response.read().decode('utf-8')
+                
+                # Loopar igenom svaret textrad för textrad
+                for line in data.splitlines():
+                    hash_del, count = line.split(':')
+                    
+                    # Jämför suffixet från API med mitt eget
+                    if hash_del == suffix:
+                        return int(count)
+    except Exception:
+        print("[-] Kunde inte nå servern för online-koll.")
+
+    return 0
+
 def main():
     # --- SYSTEMKONTROLL ---
     print("--- Startar kontroll av systemet ---")
@@ -41,7 +77,7 @@ def main():
     print(f"Ditt operativsystem: {current_os}")
     
     # --- INPUT FRÅN ANVÄNDARE ---
-    print("Lösenordskoll v1.0")
+    print("Lösenordskoll v2.0")
     
     user_password = input("Skriv in lösenordet du vill testa: ")
 
@@ -49,7 +85,7 @@ def main():
         print("\nLösenordet mottaget.")
         print(f"Längd: {len(user_password)} tecken.")
 
-        # --- KONTROLL MOT MAPP ---
+        # --- KONTROLL 1: LOKAL MAPP ---
         print("Analysera mot lokala ordlistor...")
         finns_i_lista = kolla_mapp(user_password)
 
@@ -57,6 +93,16 @@ def main():
             print("[!] VARNING: Lösenordet hittades i en av dina ordlistor.")
         else:
             print("[+] Lösenordet hittades inte i någon av de skannade listorna.")
+
+        # --- KONTROLL 2: ONLINE-API ---
+        # Nu körs denna oavsett vad som hände ovan
+        print("Kör kontroll mot online-databas...")
+        antal_traffar = kolla_online(user_password)
+        
+        if antal_traffar > 0:
+            print(f"[!] VARNING: Lösenordet har läckt {antal_traffar} gånger online (HIBP).")
+        else:
+            print("[+] Grönt ljus! Inga träffar i onlinedatabasen.")
 
     else:
         print("\nFel: Inget lösenord angavs.")

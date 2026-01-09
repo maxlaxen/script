@@ -3,6 +3,7 @@ import platform       # För att kolla vilket operativsystem som körs
 import os             # För att hantera filer och mappar i systemet
 import hashlib        # För att skapa säkra hash-summor av lösenord
 import urllib.request # För att kunna hämta data från internet (API)
+import json           # För att tolka JSON-svar från API:er
 
 def kolla_mapp(password):
     """
@@ -66,6 +67,31 @@ def kolla_online(password):
     
     return 0
 
+def kolla_comb(password):
+    """
+    Kollar lösenordet mot ProxyNova COMB-databasen.
+    Returnerar antal träffar (int).
+    """
+    # Bygger upp URL:en med lösenordet som sökfråga
+    url = f"https://api.proxynova.com/comb?query={password}&limit=1"
+    
+    try:
+        # Skapar en request med User-Agent header (API:et kräver detta)
+        req = urllib.request.Request(url, headers={'User-Agent': 'curl'})
+        
+        # Hämtar data från API:et
+        with urllib.request.urlopen(req, timeout=5) as response:
+            # Läser JSON-svaret
+            data = json.loads(response.read().decode('utf-8'))
+            
+            # Räknar hur många gånger lösenordet hittades
+            count = data.get('count', 0)
+            return count
+    except Exception:
+        print("[-] Kunde inte nå ProxyNova COMB-servern.")
+    
+    return 0
+
 def main():
     # --- SYSTEMKONTROLL ---
     print("--- Startar kontroll av systemet ---")
@@ -99,6 +125,15 @@ def main():
             print(f"[!] VARNING: Lösenordet har läckt {antal_traffar} gånger online (HIBP).")
         else:
             print("[+] Grönt ljus! Inga träffar i onlinedatabasen.")
+        
+        # --- KONTROLL 3: COMB-DATABAS ---
+        print("\nKör kontroll mot COMB-databasen...")
+        antal_comb = kolla_comb(user_password)
+        
+        if antal_comb > 0:
+            print(f"[!] VARNING: Lösenordet hittades {antal_comb} gånger i COMB-databasen.")
+        else:
+            print("[+] Grönt ljus! Inga träffar i COMB-databasen.")
     else:
         print("\nFel: Inget lösenord angavs.")
 

@@ -17,7 +17,7 @@ def kolla_mapp(password):
     if not os.path.exists(mappnamn):
         print(f"[-] Systemfel: Mappen '{mappnamn}' saknas.")
         return False
-
+    
     try:
         # Loopar igenom alla filer som finns i mappen
         for filnamn in os.listdir(mappnamn):
@@ -51,22 +51,19 @@ def kolla_online(password):
     try:
         # Hämtar data med urllib (standard i Python)
         with urllib.request.urlopen(url, timeout=5) as response:
+            # Läser svaret och gör om det till text
+            data = response.read().decode('utf-8')
             
-            # Om allt gick bra (kod 200)
-            if response.getcode() == 200:
-                # Läser svaret och gör om det till text
-                data = response.read().decode('utf-8')
+            # Loopar igenom svaret textrad för textrad
+            for line in data.splitlines():
+                hash_del, count = line.split(':')
                 
-                # Loopar igenom svaret textrad för textrad
-                for line in data.splitlines():
-                    hash_del, count = line.split(':')
-                    
-                    # Jämför suffixet från API med mitt eget
-                    if hash_del == suffix:
-                        return int(count)
+                # Jämför suffixet från API med mitt eget
+                if hash_del == suffix:
+                    return int(count)
     except Exception:
         print("[-] Kunde inte nå servern för online-koll.")
-
+    
     return 0
 
 def main():
@@ -77,33 +74,31 @@ def main():
     print(f"Ditt operativsystem: {current_os}")
     
     # --- INPUT FRÅN ANVÄNDARE ---
-    print("Lösenordskoll v2.0")
+    print("\nLösenordskoll v2.0")
     
     user_password = input("Skriv in lösenordet du vill testa: ")
-
+    
     if user_password:
         print("\nLösenordet mottaget.")
         print(f"Längd: {len(user_password)} tecken.")
-
+        
         # --- KONTROLL 1: LOKAL MAPP ---
-        print("Analysera mot lokala ordlistor...")
+        print("\nAnalysera mot lokala ordlistor...")
         finns_i_lista = kolla_mapp(user_password)
-
+        
         if finns_i_lista:
             print("[!] VARNING: Lösenordet hittades i en av dina ordlistor.")
         else:
             print("[+] Lösenordet hittades inte i någon av de skannade listorna.")
-
+        
         # --- KONTROLL 2: ONLINE-API ---
-        # Nu körs denna oavsett vad som hände ovan
-        print("Kör kontroll mot online-databas...")
+        print("\nKör kontroll mot online-databas...")
         antal_traffar = kolla_online(user_password)
         
         if antal_traffar > 0:
             print(f"[!] VARNING: Lösenordet har läckt {antal_traffar} gånger online (HIBP).")
         else:
             print("[+] Grönt ljus! Inga träffar i onlinedatabasen.")
-
     else:
         print("\nFel: Inget lösenord angavs.")
 

@@ -5,6 +5,10 @@ import hashlib        # För att skapa säkra hash-summor av lösenord
 import urllib.request # För att kunna hämta data från internet (API)
 import json           # För att tolka JSON-svar från API:er
 import logging        # För att logga händelser och fel till fil
+import argparse       # För att hantera flaggor och argument i terminalen
+
+# Global variabel för version
+VERSION = "3.2"
 
 def system_koll():
     """
@@ -132,6 +136,17 @@ def visa_meny():
     return val
 
 def main():
+    # --- INSTÄLLNINGAR FÖR ARGUMENT ---
+    parser = argparse.ArgumentParser(description="Lösenordskoll - Verktyg för att kontrollera lösenordssäkerhet.")
+    parser.add_argument("-v", "--version", action="store_true", help="Visar scriptets version och avslutar.")
+    
+    args = parser.parse_args()
+
+    # Om flaggan för version anges, skriv ut och avsluta
+    if args.version:
+        print(f"Lösenordskoll version {VERSION}")
+        return
+
     # --- KONFIGURATION FÖR LOGGNING ---
     # Sparar tidpunkt, nivå och meddelande i filen nyckelkollen.log
     logging.basicConfig(
@@ -143,7 +158,7 @@ def main():
     # --- SYSTEMKONTROLL ---
     print("--- Startar kontroll av systemet ---")
     
-    # Här kör vi kollen (Nytt för att klara VG-krav)
+    # Här kör vi kollen
     if not system_koll():
         print("[-] Avbryter programmet eftersom systemkraven inte uppfylldes.")
         return
@@ -153,7 +168,7 @@ def main():
     logging.info(f"Programmet startades på: {current_os}")
     
     # --- INPUT FRÅN ANVÄNDARE ---
-    print("\nLösenordskoll v3.1")
+    print(f"\nLösenordskoll v{VERSION}")
     
     # Visar menyn och får användarens val
     val = visa_meny()

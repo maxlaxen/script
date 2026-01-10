@@ -6,6 +6,26 @@ import urllib.request # För att kunna hämta data från internet (API)
 import json           # För att tolka JSON-svar från API:er
 import logging        # För att logga händelser och fel till fil
 
+def system_koll():
+    """
+    Kollar att systemet uppfyller kraven innan start.
+    1. Kollar skrivrättigheter (för loggfilen).
+    2. Kollar internetanslutning (för API:er).
+    """
+    # Test 1: Skrivrättigheter i nuvarande mapp
+    if not os.access(".", os.W_OK):
+        print("[-] Fel: Saknar skrivrättigheter i mappen. Kan inte skapa loggfil.")
+        return False
+
+    # Test 2: Internetanslutning (försöker nå Google snabbt)
+    try:
+        urllib.request.urlopen('https://www.google.com', timeout=3)
+    except Exception:
+        print("[-] Fel: Ingen internetanslutning. Kan inte nå databaser.")
+        return False
+
+    return True
+
 def kolla_mapp(password):
     """
     Söker igenom alla filer i mappen 'ordlistor' efter lösenordet.
@@ -123,6 +143,11 @@ def main():
     # --- SYSTEMKONTROLL ---
     print("--- Startar kontroll av systemet ---")
     
+    # Här kör vi kollen (Nytt för att klara VG-krav)
+    if not system_koll():
+        print("[-] Avbryter programmet eftersom systemkraven inte uppfylldes.")
+        return
+
     current_os = platform.system()
     print(f"Ditt operativsystem: {current_os}")
     logging.info(f"Programmet startades på: {current_os}")

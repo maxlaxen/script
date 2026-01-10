@@ -128,7 +128,7 @@ def main():
     logging.info(f"Programmet startades på: {current_os}")
     
     # --- INPUT FRÅN ANVÄNDARE ---
-    print("\nLösenordskoll v3.0")
+    print("\nLösenordskoll v3.1")
     
     # Visar menyn och får användarens val
     val = visa_meny()
@@ -175,6 +175,9 @@ def main():
             if antal_traffar > 0:
                 print(f"[!] VARNING: Lösenordet har läckt {antal_traffar} gånger online (HIBP).")
                 logging.warning(f"HIBP-träff: {antal_traffar} gånger.")
+                
+                print("    -> Rekommendation: Byt lösenord omedelbart.")
+                print("    -> INFO: Lösenordet är komprometterat och bör betraktas som förbrukat.")
             else:
                 print("[+] Grönt ljus! Inga träffar i onlinedatabasen.")
                 logging.info("Ingen träff i HIBP.")
@@ -186,6 +189,12 @@ def main():
             if antal_comb > 0:
                 print(f"[!] VARNING: Lösenordet hittades {antal_comb} gånger i COMB-databasen.")
                 logging.warning(f"COMB-träff: {antal_comb} gånger.")
+                
+                print("    -> Rekommendation: Byt lösenord omedelbart.")
+                if antal_comb >= 10000:
+                    print("    -> KRITISKT: Databasen visar max 10 000 träffar. Det verkliga antalet är sannolikt mycket högre.")
+                else:
+                    print("    -> INFO: Lösenordet är komprometterat och bör betraktas som förbrukat.")
             else:
                 print("[+] Grönt ljus! Inga träffar i COMB-databasen.")
                 logging.info("Ingen träff i COMB.")

@@ -4,6 +4,7 @@ import os             # För att hantera filer och mappar i systemet
 import hashlib        # För att skapa säkra hash-summor av lösenord
 import urllib.request # För att kunna hämta data från internet (API)
 import json           # För att tolka JSON-svar från API:er
+import logging        # För att logga händelser och fel till fil
 
 def kolla_mapp(password):
     """
@@ -17,6 +18,7 @@ def kolla_mapp(password):
     # Kontrollera att mappen finns
     if not os.path.exists(mappnamn):
         print(f"[-] Systemfel: Mappen '{mappnamn}' saknas.")
+        logging.error(f"Mappen '{mappnamn}' saknas.")
         return False
     
     try:
@@ -33,6 +35,7 @@ def kolla_mapp(password):
                             return True
     except Exception as e:
         print(f"[-] Ett fel uppstod: {e}")
+        logging.error(f"Fel vid läsning av fil: {e}")
     
     return False
 
@@ -64,6 +67,7 @@ def kolla_online(password):
                     return int(count)
     except Exception:
         print("[-] Kunde inte nå servern för online-koll.")
+        logging.error("Kunde inte nå HIBP-servern.")
     
     return 0
 
@@ -89,53 +93,107 @@ def kolla_comb(password):
             return count
     except Exception:
         print("[-] Kunde inte nå ProxyNova COMB-servern.")
+        logging.error("Kunde inte nå COMB-servern.")
     
     return 0
 
+def visa_meny():
+    """
+    Visar huvudmenyn och returnerar användarens val.
+    """
+    print("\n=== HUVUDMENY ===")
+    print("1. Kolla lösenord offline (endast lokala ordlistor)")
+    print("2. Kolla lösenord online (endast internet)")
+    print("3. Kolla lösenord fullständigt (lokala ordlistor + internet)")
+    print("4. Avsluta programmet")
+    print("==================")
+    
+    val = input("\nVälj ett alternativ (1-4): ")
+    return val
+
 def main():
+    # --- KONFIGURATION FÖR LOGGNING ---
+    # Sparar tidpunkt, nivå och meddelande i filen nyckelkollen.log
+    logging.basicConfig(
+        filename='nyckelkollen.log', 
+        level=logging.INFO, 
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
+
     # --- SYSTEMKONTROLL ---
     print("--- Startar kontroll av systemet ---")
     
     current_os = platform.system()
     print(f"Ditt operativsystem: {current_os}")
+    logging.info(f"Programmet startades på: {current_os}")
     
     # --- INPUT FRÅN ANVÄNDARE ---
-    print("\nLösenordskoll v2.0")
+    print("\nLösenordskoll v3.0")
     
-    user_password = input("Skriv in lösenordet du vill testa: ")
+    # Visar menyn och får användarens val
+    val = visa_meny()
+    logging.info(f"Användaren valde menyalternativ: {val}")
+    
+    # Om användaren vill avsluta direkt
+    if val == "4":
+        print("\nAvslutar programmet. Hej då!")
+        logging.info("Användaren avslutade programmet.")
+        return
+    
+    # Kontrollera att valet är giltigt
+    if val not in ["1", "2", "3"]:
+        print("\nFel: Ogiltigt val. Välj 1, 2, 3 eller 4.")
+        logging.warning("Ogiltigt menyval gjordes.")
+        return
+    
+    # Fråga efter lösenord
+    user_password = input("\nSkriv in lösenordet du vill testa: ")
     
     if user_password:
         print("\nLösenordet mottaget.")
         print(f"Längd: {len(user_password)} tecken.")
+        logging.info(f"Testar lösenord med längd: {len(user_password)}")
         
-        # --- KONTROLL 1: LOKAL MAPP ---
-        print("\nAnalysera mot lokala ordlistor...")
-        finns_i_lista = kolla_mapp(user_password)
+        # --- KONTROLL 1: LOKAL MAPP (endast för alternativ 1 och 3) ---
+        if val in ["1", "3"]:
+            print("\nAnalysera mot lokala ordlistor...")
+            finns_i_lista = kolla_mapp(user_password)
+            
+            if finns_i_lista:
+                print("[!] VARNING: Lösenordet hittades i en av dina ordlistor.")
+                logging.warning("Träff i lokal ordlista!")
+            else:
+                print("[+] Lösenordet hittades inte i någon av de skannade listorna.")
+                logging.info("Ingen träff i lokala listor.")
         
-        if finns_i_lista:
-            print("[!] VARNING: Lösenordet hittades i en av dina ordlistor.")
-        else:
-            print("[+] Lösenordet hittades inte i någon av de skannade listorna.")
-        
-        # --- KONTROLL 2: ONLINE-API ---
-        print("\nKör kontroll mot online-databas...")
-        antal_traffar = kolla_online(user_password)
-        
-        if antal_traffar > 0:
-            print(f"[!] VARNING: Lösenordet har läckt {antal_traffar} gånger online (HIBP).")
-        else:
-            print("[+] Grönt ljus! Inga träffar i onlinedatabasen.")
-        
-        # --- KONTROLL 3: COMB-DATABAS ---
-        print("\nKör kontroll mot COMB-databasen...")
-        antal_comb = kolla_comb(user_password)
-        
-        if antal_comb > 0:
-            print(f"[!] VARNING: Lösenordet hittades {antal_comb} gånger i COMB-databasen.")
-        else:
-            print("[+] Grönt ljus! Inga träffar i COMB-databasen.")
+        # --- KONTROLL 2 & 3: ONLINE (för alternativ 2 och 3) ---
+        if val in ["2", "3"]:
+            # --- KONTROLL 2: ONLINE-API ---
+            print("\nKör kontroll mot online-databas...")
+            antal_traffar = kolla_online(user_password)
+            
+            if antal_traffar > 0:
+                print(f"[!] VARNING: Lösenordet har läckt {antal_traffar} gånger online (HIBP).")
+                logging.warning(f"HIBP-träff: {antal_traffar} gånger.")
+            else:
+                print("[+] Grönt ljus! Inga träffar i onlinedatabasen.")
+                logging.info("Ingen träff i HIBP.")
+            
+            # --- KONTROLL 3: COMB-DATABAS ---
+            print("\nKör kontroll mot COMB-databasen...")
+            antal_comb = kolla_comb(user_password)
+            
+            if antal_comb > 0:
+                print(f"[!] VARNING: Lösenordet hittades {antal_comb} gånger i COMB-databasen.")
+                logging.warning(f"COMB-träff: {antal_comb} gånger.")
+            else:
+                print("[+] Grönt ljus! Inga träffar i COMB-databasen.")
+                logging.info("Ingen träff i COMB.")
+                
+        logging.info("Analys slutförd.")
     else:
         print("\nFel: Inget lösenord angavs.")
+        logging.error("Inget lösenord angavs.")
 
 if __name__ == "__main__":
     main()

@@ -178,14 +178,14 @@ def visa_meny():
 
 def main():
     # --- INSTÄLLNINGAR FÖR ARGUMENT ---
-    parser = argparse.ArgumentParser(description="Lösenordskoll - Verktyg för att kontrollera lösenordssäkerhet.")
+    parser = argparse.ArgumentParser(description="Nyckelkollen - Verktyg för att kontrollera lösenordssäkerhet.")
     parser.add_argument("-v", "--version", action="store_true", help="Visar scriptets version och avslutar.")
     
     args = parser.parse_args()
 
     # Om flaggan för version anges, skriv ut och avsluta
     if args.version:
-        print(f"Lösenordskoll version {VERSION}")
+        print(f"Nyckelkollen version {VERSION}")
         return
 
     # --- KONFIGURATION FÖR LOGGNING ---
@@ -209,7 +209,7 @@ def main():
     logging.info(f"Programmet startades på: {current_os}")
     
     # --- INPUT FRÅN ANVÄNDARE ---
-    print(f"\nLösenordskoll v{VERSION}")
+    print(f"\nNyckelkollen v{VERSION}")
     
     # Visar menyn och får användarens val
     val = visa_meny()

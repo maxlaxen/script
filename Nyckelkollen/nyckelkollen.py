@@ -32,7 +32,7 @@ def system_koll():
 
 def analysera_komplexitet(password):
     """
-    NY FUNKTION: Analyserar lösenordets struktur (längd, teckentyper).
+    Analyserar lösenordets struktur (längd, teckentyper).
     Ger direkt feedback till användaren om lösenordet följer 'best practice'.
     """
     print("\n--- Analys av lösenordets struktur ---")
@@ -235,7 +235,7 @@ def main():
         print(f"Längd: {len(user_password)} tecken.")
         logging.info(f"Testar lösenord med längd: {len(user_password)}")
         
-        # --- NYTT: ANALYSERA STRUKTUR (Komplexitet) ---
+        # --- ANALYSERA STRUKTUR (Komplexitet) ---
         analysera_komplexitet(user_password)
         
         # --- KONTROLL 1: LOKAL MAPP (endast för alternativ 1 och 3) ---

@@ -24,11 +24,11 @@ För att kunna använda verktyget behöver du:
 
 För att installera verktyget hämtar du koden direkt från GitHub med följande steg:
 
-1.  **Hämta koden:**
-    Öppna din terminal och kör detta kommando:
-    ```bash
-    git clone [https://github.com/maxlaxen/script.git](https://github.com/maxlaxen/script.git)
-    ```
+1. **Hämta koden**
+   
+   Öppna din terminal och kör detta kommando:
+   ```bash
+   git clone [https://github.com/maxlaxen/script.git](https://github.com/maxlaxen/script.git)
 
 2.  **Gå till rätt mapp:**
     Navigera in i undermappen där appen ligger:

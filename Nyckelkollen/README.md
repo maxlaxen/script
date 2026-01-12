@@ -1,6 +1,6 @@
-# Lösenordskollen (v3.3)
+# Nyckelkollen 
 
-Välkommen till **Lösenordskollen**. Detta är ett säkerhetsverktyg utvecklat i Python för att utvärdera hur starka och säkra lösenord är. Syftet med projektet är att ge användaren en tydlig bild av lösenordets kvalitet genom att kombinera teknisk analys med sökningar i databaser över kända dataintrång.
+Välkommen till **Nyckelkollen**. Detta är ett säkerhetsverktyg utvecklat i Python för att utvärdera hur starka och säkra lösenord är. Syftet med projektet är att ge användaren en tydlig bild av lösenordets kvalitet genom att kombinera teknisk analys med sökningar i databaser över kända dataintrång.
 
 ## Funktioner
 
@@ -50,7 +50,3 @@ Du kan använda följande argument för att styra programmet:
 
 * `-h` eller `--help`: Visar hjälpmeny med exempel på användning.
 * `-v` eller `--version`: Visar aktuell versionsinformation.
-
-Exempel på körning:
-```bash
-python3 nyckelkollen.py --version

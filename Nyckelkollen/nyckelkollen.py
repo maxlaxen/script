@@ -8,7 +8,7 @@ import logging        # För att logga händelser och fel till fil
 import argparse       # För att hantera flaggor och argument i terminalen
 
 # Global variabel för version
-VERSION = "3.2"
+VERSION = "3.3"
 
 def system_koll():
     """
@@ -29,6 +29,47 @@ def system_koll():
         return False
 
     return True
+
+def analysera_komplexitet(password):
+    """
+    NY FUNKTION: Analyserar lösenordets struktur (längd, teckentyper).
+    Ger direkt feedback till användaren om lösenordet följer 'best practice'.
+    """
+    print("\n--- Analys av lösenordets struktur ---")
+    
+    svagheter = []
+    
+    # Kriterium 1: Längd (rekommendationer brukar ligga på minst 12 idag)
+    if len(password) < 8:
+        svagheter.append(f"Kritiskt kort längd ({len(password)} tecken). Bör vara minst 12.")
+    elif len(password) < 12:
+        svagheter.append(f"Ganska kort ({len(password)} tecken). Rekommenderas minst 12 för hög säkerhet.")
+
+    # Kriterium 2: Stora bokstäver
+    if not any(c.isupper() for c in password):
+        svagheter.append("Saknar stora bokstäver (A-Z).")
+        
+    # Kriterium 3: Små bokstäver
+    if not any(c.islower() for c in password):
+        svagheter.append("Saknar små bokstäver (a-z).")
+        
+    # Kriterium 4: Siffror
+    if not any(c.isdigit() for c in password):
+        svagheter.append("Saknar siffror (0-9).")
+        
+    # Kriterium 5: Specialtecken (kollar om det finns något som INTE är siffra eller bokstav)
+    if all(c.isalnum() for c in password):
+        svagheter.append("Saknar specialtecken (t.ex. !, @, #, $).")
+
+    # Skriv ut resultatet
+    if svagheter:
+        print("[-] Varning: Lösenordet har strukturella svagheter:")
+        for punkt in svagheter:
+            print(f"    -> {punkt}")
+        logging.warning(f"Komplexitetsanalys: Hittade {len(svagheter)} svagheter.")
+    else:
+        print("[+] Lösenordet har en stark struktur (blandade tecken och god längd).")
+        logging.info("Komplexitetsanalys: Godkänd struktur.")
 
 def kolla_mapp(password):
     """
@@ -193,6 +234,9 @@ def main():
         print("\nLösenordet mottaget.")
         print(f"Längd: {len(user_password)} tecken.")
         logging.info(f"Testar lösenord med längd: {len(user_password)}")
+        
+        # --- NYTT: ANALYSERA STRUKTUR (Komplexitet) ---
+        analysera_komplexitet(user_password)
         
         # --- KONTROLL 1: LOKAL MAPP (endast för alternativ 1 och 3) ---
         if val in ["1", "3"]:

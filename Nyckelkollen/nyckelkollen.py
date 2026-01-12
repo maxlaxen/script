@@ -4,6 +4,72 @@ import os             # För att hantera filer och mappar i systemet
 import hashlib        # För att skapa säkra hash-summor av lösenord
 import urllib.request # För att kunna hämta data från internet (API)
 import json           # För att tolka JSON-svar från API:er
+import logging        # För att logga händelser och fel till fil
+import argparse       # För att hantera flaggor och argument i terminalen
+
+# Global variabel för version
+VERSION = "3.3"
+
+def system_koll():
+    """
+    Kollar att systemet uppfyller kraven innan start.
+    1. Kollar skrivrättigheter (för loggfilen).
+    2. Kollar internetanslutning (för API:er).
+    """
+    # Test 1: Skrivrättigheter i nuvarande mapp
+    if not os.access(".", os.W_OK):
+        print("[-] Fel: Saknar skrivrättigheter i mappen. Kan inte skapa loggfil.")
+        return False
+
+    # Test 2: Internetanslutning (försöker nå Google snabbt)
+    try:
+        urllib.request.urlopen('https://www.google.com', timeout=3)
+    except Exception:
+        print("[-] Fel: Ingen internetanslutning. Kan inte nå databaser.")
+        return False
+
+    return True
+
+def analysera_komplexitet(password):
+    """
+    Analyserar lösenordets struktur (längd, teckentyper).
+    Ger direkt feedback till användaren om lösenordet följer 'best practice'.
+    """
+    print("\n--- Analys av lösenordets struktur ---")
+    
+    svagheter = []
+    
+    # Kriterium 1: Längd (rekommendationer brukar ligga på minst 12 idag)
+    if len(password) < 8:
+        svagheter.append(f"Kritiskt kort längd ({len(password)} tecken). Bör vara minst 12.")
+    elif len(password) < 12:
+        svagheter.append(f"Ganska kort ({len(password)} tecken). Rekommenderas minst 12 för hög säkerhet.")
+
+    # Kriterium 2: Stora bokstäver
+    if not any(c.isupper() for c in password):
+        svagheter.append("Saknar stora bokstäver (A-Z).")
+        
+    # Kriterium 3: Små bokstäver
+    if not any(c.islower() for c in password):
+        svagheter.append("Saknar små bokstäver (a-z).")
+        
+    # Kriterium 4: Siffror
+    if not any(c.isdigit() for c in password):
+        svagheter.append("Saknar siffror (0-9).")
+        
+    # Kriterium 5: Specialtecken (kollar om det finns något som INTE är siffra eller bokstav)
+    if all(c.isalnum() for c in password):
+        svagheter.append("Saknar specialtecken (t.ex. !, @, #, $).")
+
+    # Skriv ut resultatet
+    if svagheter:
+        print("[-] Varning: Lösenordet har strukturella svagheter:")
+        for punkt in svagheter:
+            print(f"    -> {punkt}")
+        logging.warning(f"Komplexitetsanalys: Hittade {len(svagheter)} svagheter.")
+    else:
+        print("[+] Lösenordet har en stark struktur (blandade tecken och god längd).")
+        logging.info("Komplexitetsanalys: Godkänd struktur.")
 
 def kolla_mapp(password):
     """
@@ -17,6 +83,7 @@ def kolla_mapp(password):
     # Kontrollera att mappen finns
     if not os.path.exists(mappnamn):
         print(f"[-] Systemfel: Mappen '{mappnamn}' saknas.")
+        logging.error(f"Mappen '{mappnamn}' saknas.")
         return False
     
     try:
@@ -33,6 +100,7 @@ def kolla_mapp(password):
                             return True
     except Exception as e:
         print(f"[-] Ett fel uppstod: {e}")
+        logging.error(f"Fel vid läsning av fil: {e}")
     
     return False
 
@@ -64,6 +132,7 @@ def kolla_online(password):
                     return int(count)
     except Exception:
         print("[-] Kunde inte nå servern för online-koll.")
+        logging.error("Kunde inte nå HIBP-servern.")
     
     return 0
 
@@ -89,53 +158,135 @@ def kolla_comb(password):
             return count
     except Exception:
         print("[-] Kunde inte nå ProxyNova COMB-servern.")
+        logging.error("Kunde inte nå COMB-servern.")
     
     return 0
 
+def visa_meny():
+    """
+    Visar huvudmenyn och returnerar användarens val.
+    """
+    print("\n=== HUVUDMENY ===")
+    print("1. Kolla lösenord offline (endast lokala ordlistor)")
+    print("2. Kolla lösenord online (endast internet)")
+    print("3. Kolla lösenord fullständigt (lokala ordlistor + internet)")
+    print("4. Avsluta programmet")
+    print("==================")
+    
+    val = input("\nVälj ett alternativ (1-4): ")
+    return val
+
 def main():
+    # --- INSTÄLLNINGAR FÖR ARGUMENT ---
+    parser = argparse.ArgumentParser(description="Nyckelkollen - Verktyg för att kontrollera lösenordssäkerhet.")
+    parser.add_argument("-v", "--version", action="store_true", help="Visar scriptets version och avslutar.")
+    
+    args = parser.parse_args()
+
+    # Om flaggan för version anges, skriv ut och avsluta
+    if args.version:
+        print(f"Nyckelkollen version {VERSION}")
+        return
+
+    # --- KONFIGURATION FÖR LOGGNING ---
+    # Sparar tidpunkt, nivå och meddelande i filen nyckelkollen.log
+    logging.basicConfig(
+        filename='nyckelkollen.log', 
+        level=logging.INFO, 
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
+
     # --- SYSTEMKONTROLL ---
     print("--- Startar kontroll av systemet ---")
     
+    # Här kör vi kollen
+    if not system_koll():
+        print("[-] Avbryter programmet eftersom systemkraven inte uppfylldes.")
+        return
+
     current_os = platform.system()
     print(f"Ditt operativsystem: {current_os}")
+    logging.info(f"Programmet startades på: {current_os}")
     
     # --- INPUT FRÅN ANVÄNDARE ---
-    print("\nLösenordskoll v2.0")
+    print(f"\nNyckelkollen v{VERSION}")
     
-    user_password = input("Skriv in lösenordet du vill testa: ")
+    # Visar menyn och får användarens val
+    val = visa_meny()
+    logging.info(f"Användaren valde menyalternativ: {val}")
+    
+    # Om användaren vill avsluta direkt
+    if val == "4":
+        print("\nAvslutar programmet. Hej då!")
+        logging.info("Användaren avslutade programmet.")
+        return
+    
+    # Kontrollera att valet är giltigt
+    if val not in ["1", "2", "3"]:
+        print("\nFel: Ogiltigt val. Välj 1, 2, 3 eller 4.")
+        logging.warning("Ogiltigt menyval gjordes.")
+        return
+    
+    # Fråga efter lösenord
+    user_password = input("\nSkriv in lösenordet du vill testa: ")
     
     if user_password:
         print("\nLösenordet mottaget.")
         print(f"Längd: {len(user_password)} tecken.")
+        logging.info(f"Testar lösenord med längd: {len(user_password)}")
         
-        # --- KONTROLL 1: LOKAL MAPP ---
-        print("\nAnalysera mot lokala ordlistor...")
-        finns_i_lista = kolla_mapp(user_password)
+        # --- ANALYSERA STRUKTUR (Komplexitet) ---
+        analysera_komplexitet(user_password)
         
-        if finns_i_lista:
-            print("[!] VARNING: Lösenordet hittades i en av dina ordlistor.")
-        else:
-            print("[+] Lösenordet hittades inte i någon av de skannade listorna.")
+        # --- KONTROLL 1: LOKAL MAPP (endast för alternativ 1 och 3) ---
+        if val in ["1", "3"]:
+            print("\nAnalysera mot lokala ordlistor...")
+            finns_i_lista = kolla_mapp(user_password)
+            
+            if finns_i_lista:
+                print("[!] VARNING: Lösenordet hittades i en av dina ordlistor.")
+                logging.warning("Träff i lokal ordlista!")
+            else:
+                print("[+] Lösenordet hittades inte i någon av de skannade listorna.")
+                logging.info("Ingen träff i lokala listor.")
         
-        # --- KONTROLL 2: ONLINE-API ---
-        print("\nKör kontroll mot online-databas...")
-        antal_traffar = kolla_online(user_password)
-        
-        if antal_traffar > 0:
-            print(f"[!] VARNING: Lösenordet har läckt {antal_traffar} gånger online (HIBP).")
-        else:
-            print("[+] Grönt ljus! Inga träffar i onlinedatabasen.")
-        
-        # --- KONTROLL 3: COMB-DATABAS ---
-        print("\nKör kontroll mot COMB-databasen...")
-        antal_comb = kolla_comb(user_password)
-        
-        if antal_comb > 0:
-            print(f"[!] VARNING: Lösenordet hittades {antal_comb} gånger i COMB-databasen.")
-        else:
-            print("[+] Grönt ljus! Inga träffar i COMB-databasen.")
+        # --- KONTROLL 2 & 3: ONLINE (för alternativ 2 och 3) ---
+        if val in ["2", "3"]:
+            # --- KONTROLL 2: ONLINE-API ---
+            print("\nKör kontroll mot online-databas...")
+            antal_traffar = kolla_online(user_password)
+            
+            if antal_traffar > 0:
+                print(f"[!] VARNING: Lösenordet har läckt {antal_traffar} gånger online (HIBP).")
+                logging.warning(f"HIBP-träff: {antal_traffar} gånger.")
+                
+                print("    -> Rekommendation: Byt lösenord omedelbart.")
+                print("    -> INFO: Lösenordet är komprometterat och bör betraktas som förbrukat.")
+            else:
+                print("[+] Grönt ljus! Inga träffar i onlinedatabasen.")
+                logging.info("Ingen träff i HIBP.")
+            
+            # --- KONTROLL 3: COMB-DATABAS ---
+            print("\nKör kontroll mot COMB-databasen...")
+            antal_comb = kolla_comb(user_password)
+            
+            if antal_comb > 0:
+                print(f"[!] VARNING: Lösenordet hittades {antal_comb} gånger i COMB-databasen.")
+                logging.warning(f"COMB-träff: {antal_comb} gånger.")
+                
+                print("    -> Rekommendation: Byt lösenord omedelbart.")
+                if antal_comb >= 10000:
+                    print("    -> KRITISKT: Databasen visar max 10 000 träffar. Det verkliga antalet är sannolikt mycket högre.")
+                else:
+                    print("    -> INFO: Lösenordet är komprometterat och bör betraktas som förbrukat.")
+            else:
+                print("[+] Grönt ljus! Inga träffar i COMB-databasen.")
+                logging.info("Ingen träff i COMB.")
+                
+        logging.info("Analys slutförd.")
     else:
         print("\nFel: Inget lösenord angavs.")
+        logging.error("Inget lösenord angavs.")
 
 if __name__ == "__main__":
     main()

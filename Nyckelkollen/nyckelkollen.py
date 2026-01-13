@@ -16,20 +16,22 @@ def system_koll():
     Kollar att systemet uppfyller kraven innan start.
     1. Kollar skrivrättigheter (för loggfilen).
     2. Kollar internetanslutning (för API:er).
+    Returnerar tuple: (skrivrättigheter_ok, internet_ok)
     """
     # Test 1: Skrivrättigheter i nuvarande mapp
     if not os.access(".", os.W_OK):
         print("[-] Fel: Saknar skrivrättigheter i mappen. Kan inte skapa loggfil.")
-        return False
+        return (False, False)
 
     # Test 2: Internetanslutning (försöker nå Google snabbt)
+    internet_ok = True
     try:
         urllib.request.urlopen('https://www.google.com', timeout=3)
     except Exception:
-        print("[-] Fel: Ingen internetanslutning. Kan inte nå databaser.")
-        return False
+        print("[-] Varning: Ingen internetanslutning. Online-kontroller kommer inte att fungera.")
+        internet_ok = False
 
-    return True
+    return (True, internet_ok)
 
 def analysera_komplexitet(password):
     """
@@ -175,13 +177,18 @@ def main():
     print("--- Startar kontroll av systemet ---")
     
     # Här kör vi kollen
-    if not system_koll():
+    skriv_ok, internet_ok = system_koll()
+    if not skriv_ok:
         print("[-] Avbryter programmet eftersom systemkraven inte uppfylldes.")
         return
 
     current_os = platform.system()
     print(f"Ditt operativsystem: {current_os}")
     logging.info(f"Programmet startades på: {current_os}")
+    
+    if not internet_ok:
+        print("[!] OBS: Endast offline-läge (alternativ 1) kommer att fungera.")
+        logging.warning("Programmet startades utan internetanslutning.")
     
     # --- INPUT FRÅN ANVÄNDARE ---
     print(f"\nNyckelkollen v{VERSION}")
@@ -200,6 +207,12 @@ def main():
     if val not in ["1", "2", "3"]:
         print("\nFel: Ogiltigt val. Välj 1, 2, 3 eller 4.")
         logging.warning("Ogiltigt menyval gjordes.")
+        return
+    
+    # Kontrollera om användaren valde online-alternativ utan internet
+    if not internet_ok and val in ["2", "3"]:
+        print("\n[-] Fel: Du saknar internetanslutning. Endast alternativ 1 (offline) är tillgängligt.")
+        logging.error("Försök att använda online-funktioner utan internet.")
         return
     
     # Fråga efter lösenord

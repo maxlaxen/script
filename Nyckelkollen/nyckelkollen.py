@@ -6,9 +6,10 @@ import urllib.request # För att kunna hämta data från internet (API)
 import json           # För att tolka JSON-svar från API:er
 import logging        # För att logga händelser och fel till fil
 import argparse       # För att hantera flaggor och argument i terminalen
+from urllib.parse import quote # NY: För att göra lösenordet URL-säkert
 
 # Global variabel för version
-VERSION = "3.3"
+VERSION = "3.4"
 
 def system_koll():
     """
@@ -139,14 +140,19 @@ def kolla_online(password):
 def kolla_comb(password):
     """
     Kollar lösenordet mot ProxyNova COMB-databasen.
-    Returnerar antal träffar (int).
+    Returnerar antal träffar (int). Returnerar -1 vid fel.
     """
-    # Bygger upp URL:en med lösenordet som sökfråga
-    url = f"https://api.proxynova.com/comb?query={password}&limit=1"
+    # 1. Koda lösenordet säkert för URL
+    safe_pass = quote(password)
+    url = f"https://api.proxynova.com/comb?query={safe_pass}&limit=1"
     
+    # 2. Använd en riktig User-Agent (Chrome) för att inte bli blockerad
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+
     try:
-        # Skapar en request med User-Agent header (API:et kräver detta)
-        req = urllib.request.Request(url, headers={'User-Agent': 'curl'})
+        req = urllib.request.Request(url, headers=headers)
         
         # Hämtar data från API:et
         with urllib.request.urlopen(req, timeout=5) as response:
@@ -157,10 +163,10 @@ def kolla_comb(password):
             count = data.get('count', 0)
             return count
     except Exception:
-        print("[-] Kunde inte nå ProxyNova COMB-servern.")
+        # 3. Returnera -1 istället för 0 om servern inte svarar
+        print("[-] Kunde inte nå ProxyNova COMB-servern (Timeout/Blockerad).")
         logging.error("Kunde inte nå COMB-servern.")
-    
-    return 0
+        return -1 # Felkod
 
 def visa_meny():
     """
@@ -279,6 +285,10 @@ def main():
                     print("    -> KRITISKT: Databasen visar max 10 000 träffar. Det verkliga antalet är sannolikt mycket högre.")
                 else:
                     print("    -> INFO: Lösenordet är komprometterat och bör betraktas som förbrukat.")
+            elif antal_comb == -1:
+                # NYTT: Om API:et är nere får vi inget grönt ljus
+                print("[-] Hoppar över resultat för COMB (API svarade inte).")
+                logging.warning("COMB check hoppades över pga fel.")
             else:
                 print("[+] Grönt ljus! Inga träffar i COMB-databasen.")
                 logging.info("Ingen träff i COMB.")

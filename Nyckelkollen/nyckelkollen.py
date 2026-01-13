@@ -3,13 +3,13 @@ import platform       # För att kolla vilket operativsystem som körs
 import os             # För att hantera filer och mappar i systemet
 import hashlib        # För att skapa säkra hash-summor av lösenord
 import urllib.request # För att kunna hämta data från internet (API)
+import urllib.error   # För att hantera specifika urllib-fel
 import json           # För att tolka JSON-svar från API:er
 import logging        # För att logga händelser och fel till fil
 import argparse       # För att hantera flaggor och argument i terminalen
-from urllib.parse import quote # NY: För att göra lösenordet URL-säkert
 
 # Global variabel för version
-VERSION = "3.4"
+VERSION = "3.5"
 
 def system_koll():
     """
@@ -93,7 +93,7 @@ def kolla_mapp(password):
             sokvag = os.path.join(mappnamn, filnamn)
             
             # Vi öppnar bara riktiga filer
-            if os.path.isfile(sokvag):
+            if os.isfile(sokvag):
                 with open(sokvag, "r", encoding="utf-8", errors="ignore") as fil:
                     for rad in fil:
                         # Rensar bort radbrytningar och jämför med lösenordet
@@ -136,37 +136,6 @@ def kolla_online(password):
         logging.error("Kunde inte nå HIBP-servern.")
     
     return 0
-
-def kolla_comb(password):
-    """
-    Kollar lösenordet mot ProxyNova COMB-databasen.
-    Returnerar antal träffar (int). Returnerar -1 vid fel.
-    """
-    # 1. Koda lösenordet säkert för URL
-    safe_pass = quote(password)
-    url = f"https://api.proxynova.com/comb?query={safe_pass}&limit=1"
-    
-    # 2. Använd en riktig User-Agent (Chrome) för att inte bli blockerad
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-
-    try:
-        req = urllib.request.Request(url, headers=headers)
-        
-        # Hämtar data från API:et
-        with urllib.request.urlopen(req, timeout=5) as response:
-            # Läser JSON-svaret
-            data = json.loads(response.read().decode('utf-8'))
-            
-            # Räknar hur många gånger lösenordet hittades
-            count = data.get('count', 0)
-            return count
-    except Exception:
-        # 3. Returnera -1 istället för 0 om servern inte svarar
-        print("[-] Kunde inte nå ProxyNova COMB-servern (Timeout/Blockerad).")
-        logging.error("Kunde inte nå COMB-servern.")
-        return -1 # Felkod
 
 def visa_meny():
     """
@@ -256,10 +225,9 @@ def main():
                 print("[+] Lösenordet hittades inte i någon av de skannade listorna.")
                 logging.info("Ingen träff i lokala listor.")
         
-        # --- KONTROLL 2 & 3: ONLINE (för alternativ 2 och 3) ---
+        # --- KONTROLL 2: ONLINE (för alternativ 2 och 3) ---
         if val in ["2", "3"]:
-            # --- KONTROLL 2: ONLINE-API ---
-            print("\nKör kontroll mot online-databas...")
+            print("\nKör kontroll mot Have I Been Pwned...")
             antal_traffar = kolla_online(user_password)
             
             if antal_traffar > 0:
@@ -271,27 +239,6 @@ def main():
             else:
                 print("[+] Grönt ljus! Inga träffar i onlinedatabasen.")
                 logging.info("Ingen träff i HIBP.")
-            
-            # --- KONTROLL 3: COMB-DATABAS ---
-            print("\nKör kontroll mot COMB-databasen...")
-            antal_comb = kolla_comb(user_password)
-            
-            if antal_comb > 0:
-                print(f"[!] VARNING: Lösenordet hittades {antal_comb} gånger i COMB-databasen.")
-                logging.warning(f"COMB-träff: {antal_comb} gånger.")
-                
-                print("    -> Rekommendation: Byt lösenord omedelbart.")
-                if antal_comb >= 10000:
-                    print("    -> KRITISKT: Databasen visar max 10 000 träffar. Det verkliga antalet är sannolikt mycket högre.")
-                else:
-                    print("    -> INFO: Lösenordet är komprometterat och bör betraktas som förbrukat.")
-            elif antal_comb == -1:
-                # NYTT: Om API:et är nere får vi inget grönt ljus
-                print("[-] Hoppar över resultat för COMB (API svarade inte).")
-                logging.warning("COMB check hoppades över pga fel.")
-            else:
-                print("[+] Grönt ljus! Inga träffar i COMB-databasen.")
-                logging.info("Ingen träff i COMB.")
                 
         logging.info("Analys slutförd.")
     else:

@@ -7,9 +7,29 @@ import urllib.error   # För att hantera specifika urllib-fel
 import json           # För att tolka JSON-svar från API:er
 import logging        # För att logga händelser och fel till fil
 import argparse       # För att hantera flaggor och argument i terminalen
+import sys            # För att rensa skärmen på rätt sätt
 
 # Global variabel för version
 VERSION = "3.5"
+
+# ANSI-färgkoder för terminal
+class Farg:
+    ROD = '\033[91m'
+    GRON = '\033[92m'
+    GUL = '\033[93m'
+    BLA = '\033[94m'
+    RESET = '\033[0m'
+    FET = '\033[1m'
+
+def rensa_skarm():
+    """Rensar terminalfönstret."""
+    os.system('cls' if platform.system() == 'Windows' else 'clear')
+
+def skriv_rubrik(text):
+    """Skriver ut en snygg rubrik."""
+    print(f"\n{Farg.FET}{Farg.BLA}{'=' * 50}{Farg.RESET}")
+    print(f"{Farg.FET}{Farg.BLA}{text.center(50)}{Farg.RESET}")
+    print(f"{Farg.FET}{Farg.BLA}{'=' * 50}{Farg.RESET}\n")
 
 def system_koll():
     """
@@ -38,40 +58,34 @@ def analysera_komplexitet(password):
     Analyserar lösenordets struktur (längd, teckentyper).
     Ger direkt feedback till användaren om lösenordet följer 'best practice'.
     """
-    print("\n--- Analys av lösenordets struktur ---")
+    skriv_rubrik("STRUKTURANALYS")
     
     svagheter = []
     
-    # Kriterium 1: Längd (rekommendationer brukar ligga på minst 12 idag)
+    # Kriterium 1: Längd
     if len(password) < 8:
         svagheter.append(f"Kritiskt kort längd ({len(password)} tecken). Bör vara minst 12.")
     elif len(password) < 12:
         svagheter.append(f"Ganska kort ({len(password)} tecken). Rekommenderas minst 12 för hög säkerhet.")
 
-    # Kriterium 2: Stora bokstäver
+    # Kriterium 2-5: Teckentyper
     if not any(c.isupper() for c in password):
         svagheter.append("Saknar stora bokstäver (A-Z).")
-        
-    # Kriterium 3: Små bokstäver
     if not any(c.islower() for c in password):
         svagheter.append("Saknar små bokstäver (a-z).")
-        
-    # Kriterium 4: Siffror
     if not any(c.isdigit() for c in password):
         svagheter.append("Saknar siffror (0-9).")
-        
-    # Kriterium 5: Specialtecken (kollar om det finns något som INTE är siffra eller bokstav)
     if all(c.isalnum() for c in password):
         svagheter.append("Saknar specialtecken (t.ex. !, @, #, $).")
 
     # Skriv ut resultatet
     if svagheter:
-        print("[-] Varning: Lösenordet har strukturella svagheter:")
+        print(f"{Farg.ROD}✗ Lösenordet har strukturella svagheter:{Farg.RESET}")
         for punkt in svagheter:
-            print(f"    -> {punkt}")
+            print(f"{Farg.ROD}  • {punkt}{Farg.RESET}")
         logging.warning(f"Komplexitetsanalys: Hittade {len(svagheter)} svagheter.")
     else:
-        print("[+] Lösenordet har en stark struktur (blandade tecken och god längd).")
+        print(f"{Farg.GRON}✓ Lösenordet har en stark struktur (blandade tecken och god längd).{Farg.RESET}")
         logging.info("Komplexitetsanalys: Godkänd struktur.")
 
 def kolla_mapp(password):
@@ -139,30 +153,107 @@ def kolla_online(password):
     
     return 0
 
-def visa_meny():
+def visa_meny(felmeddelande=None, visa_system_info=False, os_info=None, internet_status=None):
     """
     Visar huvudmenyn och returnerar användarens val.
+    Kan visa felmeddelande och systeminformation.
     """
-    print("\n=== HUVUDMENY ===")
-    print("1. Kolla lösenord offline (endast lokala ordlistor)")
-    print("2. Kolla lösenord online (endast internet)")
-    print("3. Kolla lösenord fullständigt (lokala ordlistor + internet)")
-    print("4. Avsluta programmet")
-    print("==================")
+    rensa_skarm()
+    print(f"\n{Farg.FET}{Farg.BLA}╔{'═' * 56}╗{Farg.RESET}")
+    print(f"{Farg.FET}{Farg.BLA}║{' ' * 56}║{Farg.RESET}")
+    print(f"{Farg.FET}{Farg.BLA}║{'NYCKELKOLLEN'.center(56)}║{Farg.RESET}")
+    print(f"{Farg.FET}{Farg.BLA}║{f'Version {VERSION}'.center(56)}║{Farg.RESET}")
+    print(f"{Farg.FET}{Farg.BLA}║{' ' * 56}║{Farg.RESET}")
+    print(f"{Farg.FET}{Farg.BLA}╚{'═' * 56}╝{Farg.RESET}\n")
     
-    val = input("\nVälj ett alternativ (1-4): ")
+    # Visa systeminformation om det är första gången
+    if visa_system_info and os_info:
+        print(f"{Farg.BLA}Ditt operativsystem: {os_info}{Farg.RESET}")
+        if not internet_status:
+            print(f"{Farg.GUL}OBS: Endast offline-läge (alternativ 1) kommer att fungera.{Farg.RESET}")
+        print()
+    
+    # Visa felmeddelande om det finns
+    if felmeddelande:
+        print(f"{Farg.ROD}{felmeddelande}{Farg.RESET}\n")
+    
+    print(f"{Farg.FET}{Farg.BLA}╔{'═' * 56}╗{Farg.RESET}")
+    print(f"{Farg.FET}{Farg.BLA}║{'HUVUDMENY'.center(56)}║{Farg.RESET}")
+    print(f"{Farg.FET}{Farg.BLA}╚{'═' * 56}╝{Farg.RESET}\n")
+    print(f"{Farg.FET}1.{Farg.RESET} Kolla lösenord offline (endast lokala ordlistor)")
+    print(f"{Farg.FET}2.{Farg.RESET} Kolla lösenord online (endast internet)")
+    print(f"{Farg.FET}3.{Farg.RESET} Kolla lösenord fullständigt (lokala ordlistor + internet)")
+    print(f"{Farg.FET}4.{Farg.RESET} Avsluta programmet")
+    print(f"\n{Farg.BLA}{'─' * 58}{Farg.RESET}")
+    
+    val = input(f"\n{Farg.FET}Välj ett alternativ (1-4):{Farg.RESET} ")
     return val
+
+def visa_sammanfattning(resultat):
+    """
+    Visar en snygg sammanfattning av alla kontroller.
+    resultat är en dict med: {'struktur': bool, 'lokal': bool/None, 'online': int/None}
+    """
+    skriv_rubrik("SAMMANFATTNING")
+    
+    totalt_sakert = True
+    
+    # Strukturanalys
+    if resultat['struktur']:
+        print(f"{Farg.GRON}✓ Strukturanalys:{Farg.RESET} Godkänd")
+    else:
+        print(f"{Farg.ROD}✗ Strukturanalys:{Farg.RESET} Svagheter upptäckta")
+        totalt_sakert = False
+    
+    # Lokal kontroll
+    if resultat['lokal'] is not None:
+        if resultat['lokal']:
+            print(f"{Farg.ROD}✗ Lokal ordlista:{Farg.RESET} Lösenordet hittades i ordlista")
+            totalt_sakert = False
+        else:
+            print(f"{Farg.GRON}✓ Lokal ordlista:{Farg.RESET} Ingen träff")
+    
+    # Online kontroll
+    if resultat['online'] is not None:
+        if resultat['online'] > 0:
+            print(f"{Farg.ROD}✗ Online-databas:{Farg.RESET} Läckt {resultat['online']} gånger")
+            totalt_sakert = False
+        else:
+            print(f"{Farg.GRON}✓ Online-databas:{Farg.RESET} Ingen träff")
+    
+    # Slutgiltig bedömning
+    print(f"\n{Farg.BLA}{'─' * 50}{Farg.RESET}")
+    if totalt_sakert:
+        print(f"{Farg.FET}{Farg.GRON}RESULTAT: Lösenordet verkar säkert! ✓{Farg.RESET}")
+    else:
+        print(f"{Farg.FET}{Farg.ROD}RESULTAT: Lösenordet bör bytas omedelbart! ✗{Farg.RESET}")
+    print(f"{Farg.BLA}{'─' * 50}{Farg.RESET}\n")
 
 def main():
     # --- INSTÄLLNINGAR FÖR ARGUMENT ---
-    parser = argparse.ArgumentParser(description="Nyckelkollen - Verktyg för att kontrollera lösenordssäkerhet.")
-    parser.add_argument("-v", "--version", action="store_true", help="Visar scriptets version och avslutar.")
+    parser = argparse.ArgumentParser(
+        prog='Nyckelkollen',
+        description='Nyckelkollen - Ett professionellt verktyg för att kontrollera lösenordssäkerhet.',
+        epilog='Utvecklat för att hjälpa användare att identifiera svaga och komprometterade lösenord.'
+    )
+    parser.add_argument("-v", "--version", action="store_true", 
+                       help="Visar programmets version och information")
     
     args = parser.parse_args()
 
-    # Om flaggan för version anges, skriv ut och avsluta
+    # Om flaggan för version anges, skriv ut och avslyta
     if args.version:
-        print(f"Nyckelkollen version {VERSION}")
+        print(f"\n{Farg.FET}{Farg.BLA}{'=' * 50}{Farg.RESET}")
+        print(f"{Farg.FET}{Farg.BLA}Nyckelkollen - Lösenordssäkerhetsverktyg{Farg.RESET}")
+        print(f"{Farg.FET}{Farg.BLA}{'=' * 50}{Farg.RESET}\n")
+        print(f"Version: {Farg.GRON}{VERSION}{Farg.RESET}")
+        print(f"Skapad för att analysera lösenordssäkerhet genom:")
+        print(f"  • Strukturanalys (längd, teckentyper)")
+        print(f"  • Lokala ordlistor (offline)")
+        print(f"  • Have I Been Pwned API (online)")
+        print(f"\nAnvändning: python3 nyckelkollen.py")
+        print(f"           python3 nyckelkollen.py --version")
+        print(f"           python3 nyckelkollen.py --help\n")
         return
 
     # --- KONFIGURATION FÖR LOGGNING ---
@@ -174,89 +265,119 @@ def main():
     )
 
     # --- SYSTEMKONTROLL ---
-    print("--- Startar kontroll av systemet ---")
-    
-    # Här kör vi kollen
     skriv_ok, internet_ok = system_koll()
     if not skriv_ok:
         print("[-] Avbryter programmet eftersom systemkraven inte uppfylldes.")
         return
 
     current_os = platform.system()
-    print(f"Ditt operativsystem: {current_os}")
     logging.info(f"Programmet startades på: {current_os}")
     
     if not internet_ok:
-        print("[!] OBS: Endast offline-läge (alternativ 1) kommer att fungera.")
         logging.warning("Programmet startades utan internetanslutning.")
     
-    # --- INPUT FRÅN ANVÄNDARE ---
-    print(f"\nNyckelkollen v{VERSION}")
+    # --- HUVUDLOOP SOM TILLÅTER FLERA KÖRNINGAR ---
+    felmeddelande = None
+    forsta_gangen = True
     
-    # Visar menyn och får användarens val
-    val = visa_meny()
-    logging.info(f"Användaren valde menyalternativ: {val}")
-    
-    # Om användaren vill avsluta direkt
-    if val == "4":
-        print("\nAvslutar programmet. Hej då!")
-        logging.info("Användaren avslutade programmet.")
-        return
-    
-    # Kontrollera att valet är giltigt
-    if val not in ["1", "2", "3"]:
-        print("\nFel: Ogiltigt val. Välj 1, 2, 3 eller 4.")
-        logging.warning("Ogiltigt menyval gjordes.")
-        return
-    
-    # Kontrollera om användaren valde online-alternativ utan internet
-    if not internet_ok and val in ["2", "3"]:
-        print("\n[-] Fel: Du saknar internetanslutning. Endast alternativ 1 (offline) är tillgängligt.")
-        logging.error("Försök att använda online-funktioner utan internet.")
-        return
-    
-    # Fråga efter lösenord
-    user_password = input("\nSkriv in lösenordet du vill testa: ")
-    
-    if user_password:
-        print("\nLösenordet mottaget.")
-        print(f"Längd: {len(user_password)} tecken.")
-        logging.info(f"Testar lösenord med längd: {len(user_password)}")
+    while True:
+        # --- INPUT FRÅN ANVÄNDARE ---
         
-        # --- ANALYSERA STRUKTUR (Komplexitet) ---
-        analysera_komplexitet(user_password)
+        # Visar menyn och får användarens val
+        val = visa_meny(felmeddelande, forsta_gangen, current_os, internet_ok)
+        forsta_gangen = False
+        felmeddelande = None
+        logging.info(f"Användaren valde menyalternativ: {val}")
         
-        # --- KONTROLL 1: LOKAL MAPP (endast för alternativ 1 och 3) ---
-        if val in ["1", "3"]:
-            print("\nAnalysera mot lokala ordlistor...")
-            finns_i_lista = kolla_mapp(user_password)
+        # Om användaren vill avsluta direkt
+        if val == "4":
+            print("\nAvslutar programmet. Hej då!")
+            logging.info("Användaren avslutade programmet.")
+            break
+        
+        # Kontrollera att valet är giltigt
+        if val not in ["1", "2", "3"]:
+            felmeddelande = "Fel: Ogiltigt val. Välj 1, 2, 3 eller 4."
+            logging.warning("Ogiltigt menyval gjordes.")
+            continue
+        
+        # Kontrollera om användaren valde online-alternativ utan internet
+        if not internet_ok and val in ["2", "3"]:
+            felmeddelande = "Fel: Du saknar internetanslutning. Endast alternativ 1 (offline) är tillgängligt."
+            logging.error("Försök att använda online-funktioner utan internet.")
+            continue
+        
+        # Fråga efter lösenord
+        user_password = input("\nSkriv in lösenordet du vill testa: ")
+        
+        if user_password:
+            rensa_skarm()
+            print(f"\n{Farg.BLA}Lösenordet mottaget. Längd: {len(user_password)} tecken.{Farg.RESET}")
+            logging.info(f"Testar lösenord med längd: {len(user_password)}")
             
-            if finns_i_lista:
-                print("[!] VARNING: Lösenordet hittades i en av dina ordlistor.")
-                logging.warning("Träff i lokal ordlista!")
-            else:
-                print("[+] Lösenordet hittades inte i någon av de skannade listorna.")
-                logging.info("Ingen träff i lokala listor.")
-        
-        # --- KONTROLL 2: ONLINE (för alternativ 2 och 3) ---
-        if val in ["2", "3"]:
-            print("\nKör kontroll mot Have I Been Pwned...")
-            antal_traffar = kolla_online(user_password)
+            # Dictionary för att spara resultat
+            resultat = {'struktur': False, 'lokal': None, 'online': None}
             
-            if antal_traffar > 0:
-                print(f"[!] VARNING: Lösenordet har läckt {antal_traffar} gånger online (HIBP).")
-                logging.warning(f"HIBP-träff: {antal_traffar} gånger.")
+            # --- ANALYSERA STRUKTUR (Komplexitet) ---
+            # Enkel check för struktur
+            if len(user_password) >= 12 and any(c.isupper() for c in user_password) and \
+               any(c.islower() for c in user_password) and any(c.isdigit() for c in user_password) and \
+               not all(c.isalnum() for c in user_password):
+                resultat['struktur'] = True
+            
+            analysera_komplexitet(user_password)
+            
+            # --- KONTROLL 1: LOKAL MAPP ---
+            if val in ["1", "3"]:
+                skriv_rubrik("LOKAL ORDLISTEKONTROLL")
+                print(f"{Farg.BLA}Söker igenom lokala ordlistor...{Farg.RESET}")
+                finns_i_lista = kolla_mapp(user_password)
+                resultat['lokal'] = finns_i_lista
                 
-                print("    -> Rekommendation: Byt lösenord omedelbart.")
-                print("    -> INFO: Lösenordet är komprometterat och bör betraktas som förbrukat.")
-            else:
-                print("[+] Grönt ljus! Inga träffar i onlinedatabasen.")
-                logging.info("Ingen träff i HIBP.")
+                if finns_i_lista:
+                    print(f"\n{Farg.ROD}✗ VARNING: Lösenordet hittades i en av dina ordlistor.{Farg.RESET}")
+                    logging.warning("Träff i lokal ordlista!")
+                else:
+                    print(f"\n{Farg.GRON}✓ Lösenordet hittades inte i de skannade listorna.{Farg.RESET}")
+                    logging.info("Ingen träff i lokala listor.")
+            
+            # --- KONTROLL 2: ONLINE ---
+            if val in ["2", "3"]:
+                skriv_rubrik("ONLINE-KONTROLL (HIBP)")
+                print(f"{Farg.BLA}Kontrollerar mot Have I Been Pwned...{Farg.RESET}")
+                antal_traffar = kolla_online(user_password)
+                resultat['online'] = antal_traffar
                 
-        logging.info("Analys slutförd.")
-    else:
-        print("\nFel: Inget lösenord angavs.")
-        logging.error("Inget lösenord angavs.")
+                if antal_traffar > 0:
+                    print(f"\n{Farg.ROD}✗ KRITISKT: Lösenordet har läckt {antal_traffar} gånger i dataintrång.{Farg.RESET}")
+                    print(f"{Farg.ROD}  Angripare kan ha tillgång till detta lösenord - byt omedelbart!{Farg.RESET}")
+                    logging.warning(f"HIBP-träff: {antal_traffar} gånger.")
+                else:
+                    print(f"\n{Farg.GRON}✓ Inga träffar i onlinedatabasen.{Farg.RESET}")
+                    logging.info("Ingen träff i HIBP.")
+            
+            # --- VISA SAMMANFATTNING ---
+            visa_sammanfattning(resultat)
+            
+            logging.info("Analys slutförd.")
+            
+            # Fråga om användaren vill köra igen med felhantering
+            while True:
+                print(f"\n{Farg.BLA}{'─' * 50}{Farg.RESET}")
+                igen = input(f"{Farg.FET}Vill du testa ett annat lösenord? (j/n):{Farg.RESET} ").lower().strip()
+                
+                if igen in ['j', 'ja']:
+                    logging.info("Användaren valde att testa ett nytt lösenord.")
+                    break
+                elif igen in ['n', 'nej']:
+                    print("\nAvslutar programmet. Hej då!")
+                    logging.info("Användaren valde att avsluta efter analys.")
+                    return
+                else:
+                    print(f"{Farg.ROD}Ogiltigt svar. Svara 'j' för ja eller 'n' för nej.{Farg.RESET}")
+        else:
+            felmeddelande = "Fel: Inget lösenord angavs."
+            logging.error("Inget lösenord angavs.")
 
 if __name__ == "__main__":
     main()

@@ -94,8 +94,8 @@ def kolla_mapp(password):
         for filnamn in os.listdir(mappnamn):
             sokvag = os.path.join(mappnamn, filnamn)
             
-            # Vi öppnar bara riktiga filer
-            if os.isfile(sokvag):
+            # Vi öppnar bara riktiga filer 
+            if os.path.isfile(sokvag):
                 with open(sokvag, "r", encoding="utf-8", errors="ignore") as fil:
                     for rad in fil:
                         # Rensar bort radbrytningar och jämför med lösenordet

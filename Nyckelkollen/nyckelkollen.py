@@ -163,14 +163,13 @@ def visa_meny(felmeddelande=None, visa_system_info=False, os_info=None, internet
     print(f"{Farg.FET}{Farg.BLA}║{' ' * 56}║{Farg.RESET}")
     print(f"{Farg.FET}{Farg.BLA}║{'NYCKELKOLLEN'.center(56)}║{Farg.RESET}")
     print(f"{Farg.FET}{Farg.BLA}║{f'Version {VERSION}'.center(56)}║{Farg.RESET}")
+    print(f"{Farg.FET}{Farg.BLA}║{f'OS: {os_info}'.center(56)}║{Farg.RESET}")
     print(f"{Farg.FET}{Farg.BLA}║{' ' * 56}║{Farg.RESET}")
     print(f"{Farg.FET}{Farg.BLA}╚{'═' * 56}╝{Farg.RESET}\n")
     
-    # Visa systeminformation om det är första gången
-    if visa_system_info and os_info:
-        print(f"{Farg.BLA}Ditt operativsystem: {os_info}{Farg.RESET}")
-        if not internet_status:
-            print(f"{Farg.GUL}OBS: Endast offline-läge (alternativ 1) kommer att fungera.{Farg.RESET}")
+    # Visa varning om internet saknas vid uppstart
+    if visa_system_info and not internet_status:
+        print(f"{Farg.GUL}OBS: Endast offline-läge (alternativ 1) kommer att fungera.{Farg.RESET}")
         print()
     
     # Visa felmeddelande om det finns

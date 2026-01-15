@@ -103,26 +103,31 @@ Längd: 8 tecken.
 [-] Varning: Lösenordet har strukturella svagheter:
     -> Kritiskt kort längd (8 tecken). Bör vara minst 12.
 ```
+## Roadmap 🗺️
+
+Planerade funktioner för framtida versioner:
+
+#### 🎲 Lösenordsgenerator
+En funktion som skapar säkra lösenord med anpassningsbar längd och teckentyper. Lösenordet kopieras automatiskt till urklipp för enkel användning.
+
+#### 🖥️ GUI (Grafiskt gränssnitt)
+Ett fönsterbaserat gränssnitt med knappar som alternativ till terminalen. Resultaten visas med färgkoder (grön/gul/röd) för tydligare översikt.
+
+#### 📄 Batch-kontroll (Fil-import)
+Möjlighet att ladda upp en fil med flera lösenord och testa alla samtidigt. Resultaten kan exporteras som en rapport i PDF eller CSV-format.
 
 ## Filstruktur
-
 ```
 Nyckelkollen/
 ├── nyckelkollen.py      # Huvudprogrammet
 ├── ordlistor/           # Mapp för lokala lösenordslistor (valfritt)
 │   └── rockyou.txt      # Exempel på ordlista
-├── nyckelkollen.log     # Loggfil (skapas automatiskt)
-└── README.md            # Denna fil
+├── Flowchart.png        # Visuellt flödesschema över programlogiken
+├── README.md            # Denna fil
+└── nyckelkollen.log     # Loggfil (skapas automatiskt vid körning)
 ```
 
 ## Bidra
-
 Hittar du buggar eller har förslag på förbättringar? Skapa gärna en issue eller pull request på GitHub!
 
-## Licens
-
-Detta projekt är öppen källkod. Se LICENSE-filen för mer information.
-
----
-
-*Skapad med fokus på säkerhet och användarvänlighet* 🛡️
+*Projektet är öppen källkod och fritt att använda.*

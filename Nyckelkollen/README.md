@@ -76,11 +76,11 @@ python3 nyckelkollen.py --version
 
 ## Demonstration
 
-Här är ett exempel där skriptet testar lösenordet mot ordlistan `rockyou.txt` med alternativ 3 (fullständig kontroll):
+Här är ett exempel där skriptet testar lösenordet `qwertyuiop` mot ordlistan `rockyou.txt` med alternativ 3 (fullständig kontroll):
 
 ![Demo av Nyckelkollen](./bilder/demo.png)
 
-*Skärmdumpen visar hur programmet analyserar ett lösenord och kontrollerar det mot både lokala ordlistor och Have I Been Pwned.*
+*Skärmdumpen visar hur programmet analyserar lösenordet och kontrollerar det mot både lokala ordlistor och Have I Been Pwned.*
 
 ## Säkerhet
 
@@ -88,29 +88,6 @@ Här är ett exempel där skriptet testar lösenordet mot ordlistan `rockyou.txt
 * HIBP-kontrollen använder k-anonymitet (endast 5 första tecken av SHA-1-hashen skickas)
 * Loggfilen sparar endast lösenordslängd, inte själva lösenordet
 
-## Exempel på användning
-
-```
-Nyckelkollen v3.5
-
-=== HUVUDMENY ===
-1. Kolla lösenord offline (endast lokala ordlistor)
-2. Kolla lösenord online (endast internet)
-3. Kolla lösenord fullständigt (lokala ordlistor + internet)
-4. Avsluta programmet
-==================
-
-Välj ett alternativ (1-4): 3
-
-Skriv in lösenordet du vill testa: ********
-
-Lösenordet mottaget.
-Längd: 8 tecken.
-
---- Analys av lösenordets struktur ---
-[-] Varning: Lösenordet har strukturella svagheter:
-    -> Kritiskt kort längd (8 tecken). Bör vara minst 12.
-```
 ## Roadmap 🗺️
 
 Planerade funktioner för framtida versioner:

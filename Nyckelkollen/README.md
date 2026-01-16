@@ -74,6 +74,14 @@ När programmet startar presenteras en meny med följande alternativ:
 python3 nyckelkollen.py --version
 ```
 
+## Demonstration
+
+Här är ett exempel där skriptet testar lösenordet mot ordlistan `rockyou.txt` med alternativ 3 (fullständig kontroll):
+
+![Demo av Nyckelkollen](./bilder/demo.png)
+
+*Skärmdumpen visar hur programmet analyserar ett lösenord och kontrollerar det mot både lokala ordlistor och Have I Been Pwned.*
+
 ## Säkerhet
 
 * Lösenord skickas **aldrig** i klartext över internet
@@ -122,6 +130,8 @@ Nyckelkollen/
 ├── nyckelkollen.py      # Huvudprogrammet
 ├── ordlistor/           # Mapp för lokala lösenordslistor (valfritt)
 │   └── rockyou.txt      # Exempel på ordlista
+├── bilder/              # Skärmdumpar och illustrationer
+│   └── demo.png         # Demonstration av programmet
 ├── Flowchart.png        # Visuellt flödesschema över programlogiken
 ├── README.md            # Denna fil
 └── nyckelkollen.log     # Loggfil (skapas automatiskt vid körning)
